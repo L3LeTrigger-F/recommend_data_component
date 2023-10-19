@@ -36,18 +36,27 @@ def get_dc_components(dc_data,wv_from_text)->dict:
     for u in dc_data:
         new_data=[]
         #nlp embedding特征
+        '''
         nlp_list=[1,3,4,7,9,10,11,30]
         for i in nlp_list:
             new_data.extend(deal_text_embedding(u[i],wv_from_text))
         #直接使用的特征
         new_data.extend([int(u[12]),int(u[13]),int(u[15]),int(u[21])])
-        #处理特征
+        #处理特征[暂时不用]
         new_data.append(deal_production_mode(u[14]))
         new_data.extend(deal_service_type(u[18]))
+        '''
+        new_data.extend(deal_text_embedding(u[1],wv_from_text))#只用了一个component_name 
+        # new_data.append(u[39])#merchant_id也不用了，只用一个compoenent_name
         component_id_list[u[0]]={}
         component_id_list[u[0]]["vec"]=new_data#这里有问题
         component_id_list[u[0]]["component_name"]=u[1]
         component_id_list[u[0]]["description"]=u[4]
+        component_id_list[u[0]]["merchant_id"]=u[5]
+        component_id_list[u[0]]["component_form"]=u[13]
+        component_id_list[u[0]]["status"]=u[21]
+
+
     return component_id_list
 def deal_id(data):
     return list(set(data))
@@ -57,8 +66,9 @@ def deal_id(data):
     #使用特征（优先用这个）：
         #nlp特征：component_name[3]、merchant_name[5]、这两个重复了啊
         #直接使用的特征(先不用这个了，不然不知道咋整)：out_data_size[11] result[12] identification_status[21]
-def get_sms_api_log(data,ways,user,item_list,wv_from_text)->dict:
+def get_sms_api_log(data,ways,user,item_list,wv_from_text)->dict:#这里只用component_name和merchant_name就行
     a=0
+    use_component=[]
     for da in data:
         user_id=da[1]
         if ways==0:
@@ -68,22 +78,24 @@ def get_sms_api_log(data,ways,user,item_list,wv_from_text)->dict:
         if user_id not in user:
             user[user_id]=[]
             # user[user_id]=[]
-        new_data=[component_id]
+        new_data=[int(component_id)]
+        use_component.append(int(component_id))
         if component_id in item_list:
-            a+=1
+            a+=1#这个可以删了
         #处理nlp特征
         if ways==0:
             new_data.extend(deal_text_embedding(da[4],wv_from_text))
-            new_data.extend(deal_text_embedding(da[6],wv_from_text))
+            # new_data.extend(deal_text_embedding(da[6],wv_from_text))
         else :
             new_data.extend(deal_text_embedding(da[3],wv_from_text))
-            new_data.extend(deal_text_embedding(da[5],wv_from_text))
+            # new_data.extend(deal_text_embedding(da[5],wv_from_text))
         # new_data.append(da[11])
         # new_data.append(da[12])
         # new_data.append(da[21])
         #元件id、其他特征
         user[user_id].append(new_data)
-    return user
+    use_component=list(set(use_component))
+    return user,use_component
 #先不管这个了
 def get_business_order(bs_data,user)->dict:
     buyer_name_list=[]
